@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/addTask"
+        android:icon="@android:drawable/ic_menu_add"
+        android:title="@string/addButton"
+        app:showAsAction="always">
+        <menu>
+            <item
+                android:id="@+id/toDo"
+                android:icon="@android:drawable/ic_menu_agenda"
+                android:title="@string/toDo" />
+            <item
+                android:id="@+id/email"
+                android:icon="@android:drawable/ic_dialog_email"
+                android:title="@string/email" />
+            <item
+                android:id="@+id/phone"
+                android:icon="@android:drawable/ic_menu_call"
+                android:title="@string/phone" />
+            <item
+                android:id="@+id/meeting"
+                android:icon="@android:drawable/ic_menu_my_calendar"
+                android:title="@string/meeting" />
+        </menu>
+    </item>
+</menu>
