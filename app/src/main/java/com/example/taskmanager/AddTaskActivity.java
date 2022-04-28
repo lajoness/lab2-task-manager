@@ -48,7 +48,7 @@ public class AddTaskActivity extends AppCompatActivity {
                 Gson gson = new Gson();
                 String json = gson.toJson(newTask);
                 System.out.println("SIZE: " + sharedPreferences.getAll().keySet().size());
-                prefEditor.putString(findNextKey(sharedPreferences.getAll().keySet().size()), json);
+                prefEditor.putString("Task" + findNextKey(sharedPreferences.getAll().keySet().size()), json);
                 prefEditor.commit();
 
                 finish();
