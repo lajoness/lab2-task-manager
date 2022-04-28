@@ -4,10 +4,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -24,6 +26,8 @@ import java.util.Map;
 public class MainActivity extends AppCompatActivity {
 
     RecyclerView recyclerView;
+    ArrayList<String> taskList;
+    SharedPreferences sharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,14 +36,46 @@ public class MainActivity extends AppCompatActivity {
 
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleCallback);
+        itemTouchHelper.attachToRecyclerView(recyclerView);
 
-        SharedPreferences sharedPreferences = getSharedPreferences();
+        sharedPreferences = getSharedPreferences();
         Map taskMap = sharedPreferences.getAll();
-        ArrayList<String> taskList = mapToList(taskMap);
+        taskList = mapToList(taskMap);
 
         recyclerView.setAdapter(new Adapter(taskList, getApplicationContext()));
-
     }
+
+    ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+
+        @Override
+        public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+            return false;
+        }
+
+        @Override
+        public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+
+            int position = viewHolder.getAdapterPosition();
+
+            switch (direction){
+
+                case ItemTouchHelper.LEFT:
+
+                    Task task = getTask(position);
+                    task.setStatus(true);
+                    recyclerView.getAdapter().notifyDataSetChanged();
+                    break;
+
+                case ItemTouchHelper.RIGHT:
+
+                    removeTaskFromSharedPref(position);
+                    taskList.remove(position);
+                    recyclerView.getAdapter().notifyDataSetChanged();
+                    break;
+            }
+        }
+    };
 
     private SharedPreferences getSharedPreferences() {
 
@@ -47,11 +83,41 @@ public class MainActivity extends AppCompatActivity {
         return sharedPreferences;
     }
 
+    private void removeTaskFromSharedPref(int position){
+
+        Task task = getTask(position);
+        SharedPreferences.Editor prefEditor = sharedPreferences.edit();
+        prefEditor.remove(getTaskKey(task)).apply();
+    }
+
+    private Task getTask(int position) {
+
+        Gson gson = new Gson();
+        String json = taskList.get(position);
+        return gson.fromJson(json, Task.class);
+    }
+
+    private String getTaskKey(Task task){
+
+        Gson gson = new Gson();
+        String jsonTask = gson.toJson(task);
+
+        String key = "";
+
+        for (Map.Entry<String, ?> entry: sharedPreferences.getAll().entrySet()) {
+            if (jsonTask.equals(entry.getValue())) {
+
+                key = entry.getKey();
+            }
+        }
+
+        return key;
+    }
+
     protected void onResume() {
         super.onResume();
-        SharedPreferences sharedPreferences = getSharedPreferences();
         Map taskMap = sharedPreferences.getAll();
-        ArrayList<String> taskList = mapToList(taskMap);
+        taskList = mapToList(taskMap);
 
         recyclerView.setAdapter(new Adapter(taskList, getApplicationContext()));
     }
@@ -94,10 +160,8 @@ public class MainActivity extends AppCompatActivity {
 
     public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
 
-        ArrayList<String> taskList;
-
         public Adapter(ArrayList<String> taskList, Context context) {
-            this.taskList = taskList;
+
         }
 
         @Override
@@ -110,9 +174,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onBindViewHolder(Adapter.ViewHolder holder, int position) {
 
-            Gson gson = new Gson();
-            String json = taskList.get(position);
-            Task task = gson.fromJson(json, Task.class);
+            Task task = getTask(position);
             String status = (task.getStatus()) ? "DONE" : "NOT DONE";
 
             holder.icon.setImageResource(findIcon(task.getType()));
