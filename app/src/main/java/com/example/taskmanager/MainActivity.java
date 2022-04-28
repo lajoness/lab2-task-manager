@@ -15,6 +15,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -63,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
                 case ItemTouchHelper.LEFT:
 
                     Task task = getTask(position);
-                    task.setStatus(true);
+                    updateTask(position, task);
                     recyclerView.getAdapter().notifyDataSetChanged();
                     break;
 
@@ -88,6 +89,19 @@ public class MainActivity extends AppCompatActivity {
         Task task = getTask(position);
         SharedPreferences.Editor prefEditor = sharedPreferences.edit();
         prefEditor.remove(getTaskKey(task)).apply();
+    }
+
+    private void updateTask(int position, Task task) {
+
+        String key = getTaskKey(task);
+        task.setStatus(true);
+
+        Gson gson = new Gson();
+        String json = gson.toJson(task);
+        taskList.set(position, json);
+
+        SharedPreferences.Editor prefEditor = sharedPreferences.edit();
+        prefEditor.putString(key, json).apply();
     }
 
     private Task getTask(int position) {
@@ -175,10 +189,10 @@ public class MainActivity extends AppCompatActivity {
         public void onBindViewHolder(Adapter.ViewHolder holder, int position) {
 
             Task task = getTask(position);
-            String status = (task.getStatus()) ? "DONE" : "NOT DONE";
 
             holder.icon.setImageResource(findIcon(task.getType()));
-            holder.text.setText(task.getTitle() + "\nDue: " + task.getDeadline() + "\nStatus: " + status);
+            holder.text.setText(task.getTitle() + "\nDue: " + task.getDeadline());
+            holder.checkbox.setChecked(task.getStatus());
         }
 
         private int findIcon(String type){
@@ -213,11 +227,13 @@ public class MainActivity extends AppCompatActivity {
 
             protected ImageView icon;
             protected TextView text;
+            protected CheckBox checkbox;
 
             public ViewHolder(View itemView) {
                 super(itemView);
                 icon = (ImageView) itemView.findViewById(R.id.task_item_image);
                 text = (TextView) itemView.findViewById(R.id.task_item_text);
+                checkbox = (CheckBox) itemView.findViewById(R.id.task_item_cb);
             }
         }
     }
